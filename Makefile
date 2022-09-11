@@ -4,7 +4,7 @@ GHCd = ghc -dynamic -outputdir $(OutputDir) -no-keep-hi-files
 PTEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape" -output-directory $(PdfDir)
 SAGE = sage -t
 
-all: programs cleanTex
+all: programs cleanTex cleanSage
 programs: burnside
 
 burnside: prepDir
@@ -27,9 +27,11 @@ cleanTex: prepDir
 	find $(PdfDir)/ -type f -name '*.pyg' -delete
 	find $(PdfDir)/ -type f -name '*.synctex.gz' -delete
 	find $(PdfDir)/ -type f -name '*.toc' -delete
+cleanSage: prepDir
 	find $(PdfDir)/ -type f -name '*.sagetex.scmd' -delete
 	find $(PdfDir)/ -type f -name '*.sagetex.sout' -delete
 docs: cleanTex
 	rm -rf $(OutputDir)
 program: cleanTex
 	rm -rf $(PdfDir)
+keepSage: programs cleanTex
