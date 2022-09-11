@@ -2,7 +2,7 @@
 % Document: ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style" $*
 % Haskell: ghc -dynamic
 
-\documentclass[uplatex,11pt,a4paper,dvipdfmx]{ujarticle}
+\documentclass[11pt,a4paper,dvipdfmx]{ujarticle}
 \usepackage[margin=24mm]{geometry}
 \usepackage{preamble-jp}
 
