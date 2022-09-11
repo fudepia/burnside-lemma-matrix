@@ -10,3 +10,4 @@ _minted*
 err
 *.vim
 out/
+img/
