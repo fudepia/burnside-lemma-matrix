@@ -1,0 +1,15 @@
+﻿\usetikzlibrary{positioning,arrows.meta}
+\begin{tikzpicture}[scale=.12,every node/.style={minimum size=1cm},on grid]
+%
+  \begin{scope}[]
+    \draw[step=24mm, draw opacity=0,gray] (-9,-9) rectangle (25,25);
+    \begin{scope}[scale around={1:(12,12)}]
+		\fill[blue] (12,12) rectangle (24,24) node[pos=.5,white] {$S_1$};
+		\fill[green] (0,12) rectangle (12,24) node[pos=.5,white] {$S_2$};
+		\fill[red] (0,0) rectangle (12,12) node[pos=.5,white] {$S_3$};
+		\fill[gray] (12,0) rectangle (24,12) node[pos=.5,white] {$S_4$};
+        \draw[->] (12,12)--(27,12) node[right]{$\vec{v_1}=(x_1, y_1)$};
+        \draw[->] (12,12)--(12,27) node[above]{$\vec{v_2}=(x_2, y_2)$};
+    \end{scope}
+  \end{scope}
+\end{tikzpicture}

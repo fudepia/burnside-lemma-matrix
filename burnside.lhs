@@ -36,6 +36,11 @@ import Data.List
 \end{code}
 \end{comment}
 
+\section*{How to Read}
+\addcontentsline{toc}{section}{How to Read}
+
+\newpage
+
 
 \section{Brief Introduction to Matrix and Linear Transformation}
 So what does matrix in linear transformation means? Well, for any $n\times n$ matrix, you could think of each column as representing each axis' unit vector's position after the transformation. So for example:
@@ -52,6 +57,40 @@ Hence by these definitions we could conclude that:
 \begin{thm}[最少資料量]\label{data}
   For any object within n-Dimensional space, by specifying n-Surfaces' location could unique identify an object's orientation.
 \end{thm}
+
+\section{Describing Object's State}
+
+To descibe an object's current orientation, we'll use a set of vectors (which is collected into a matrix). For example, a $2\times 2$ square could be denoted by two 2-D vectors (aka a $2\times 2$ matrix) like following:
+
+\begin{multicols}{2}
+
+\null \vfill
+\begin{equation}
+M = \begin{bmatrix}
+    x_1 & x_2 \\
+    y_1 & y_2
+  \end{bmatrix}
+\end{equation}
+\vfill \null
+
+\columnbreak
+
+% \begin{figure}[!h]\centering
+\input{2x2-structure.tikz}
+% \end{figure}
+
+\end{multicols}
+
+
+in which we could clearly see by giving two 2-D vectors, we could rigidly define our 4 different squadron (in counterclockwise fashion).
+
+Now we can apply transformations onto these vectors. But what could be counted as a valid transformation? Well, those whom preformed a closed transformation.
+
+% TODO: Define closed transformation
+
+\section{Describing Operations}
+
+
 \section{Properties}
 當我們在談到旋轉一物體的時候我們可以將其總結成：
 \begin{equation}
@@ -134,9 +173,37 @@ disjointSetNum (Matrix a) (Matrix b) = sum $ map fromEnum (map eqPair (zip a b))
 \end{code}
 
 \section{Extend Research Topics（未寫）}
-\subsection{非正多面體}
-\subsection{高維物體}
-\subsection{魔術方塊}
+\subsection{2x2魔術方塊}
+
+The way I model 2x2 Rubik's Cube is by first giving a position vector $p_i$ and then a facing vector $f_i$ which tells you which direction is the first face facing.
+
+\begin{subequations}
+\begin{equation}
+P = \begin{bmatrix}
+p_1 & \dots & p_8
+\end{bmatrix},\,
+\text{each component of }p_i\text{ is either 1 or -1}
+\end{equation}
+\begin{equation}
+F = \begin{bmatrix}
+f_1 & \dots & f_8
+\end{bmatrix},\,
+f_i\text{ is one of the 6 different (directional) unit vector}
+\end{equation}
+\end{subequations}
+
+And know with $(p_i, f_i)$ we could denote any block we want, where we can then give a list of 3 colours (order-sensitive) which will be coloured counterclockwise.
+
+\begin{code}
+data Rubiks2x2 = Rubiks2x2 Matrix Matrix
+\end{code}
+
+\subsubsection{Proof of Completeness}
+% TODO:
+
+% \subsection{非正多面體}
+% \subsection{高維物體}
+% \subsection{3x3魔術方塊}
 
 
 
@@ -192,6 +259,22 @@ instance Num Matrix where
                            (Matrix xs') = diagFlip x
 \end{code}
 
+\section{Sage Graphics}
+
+\subsection{2x2 Rubik's Cube}
+
+\begin{sageblock}
+def plotRubiks2x2(P, F, c):
+    return
+\end{sageblock}
+
+\newpage
+\section*{LICENSE}
+\addcontentsline{toc}{section}{LICENSE}
+
+\subsection*{Codes}
+
+\subsection*{Documentation}
 
 \end{document}
 

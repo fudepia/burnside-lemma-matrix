@@ -1,15 +1,17 @@
 OutputDir = ./out
 PdfDir = ./docs
-GHC = ghc -dynamic -outputdir $(OutputDir) -no-keep-hi-files
-TEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape" -output-directory $(PdfDir)
+GHCd = ghc -dynamic -outputdir $(OutputDir) -no-keep-hi-files
+PTEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape" -output-directory $(PdfDir)
+SAGE = sage -t
 
 all: programs cleanTex
 programs: burnside
 
 burnside: prepDir
-	$(GHC) ./burnside.lhs
-	$(TEX) ./burnside.lhs
-	$(TEX) ./burnside.lhs
+	$(GHCd) ./burnside.lhs
+	$(PTEX) ./burnside.lhs
+	$(SAGE) $(PdfDir)/burnside.sagetex.sage
+	$(PTEX) ./burnside.lhs
 
 prepDir:
 	mkdir -p $(OutputDir)
