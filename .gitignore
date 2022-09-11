@@ -1,0 +1,12 @@
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.hi
+*.o
+_minted*
+~*
+err
+*.vim
+out/
