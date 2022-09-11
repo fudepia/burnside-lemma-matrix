@@ -88,6 +88,14 @@ Now we can apply transformations onto these vectors. But what could be counted a
 
 % TODO: Define closed transformation
 
+\begin{code}
+validVectors :: Matrix -> Matrix -> Bool
+--              sample    subject   result
+validVectors (Matrix s) (Matrix x) = (sort s') == (sort x')
+                                    where s' = nub s
+                                          x' = nub x
+\end{code}
+
 \section{Describing Operations}
 
 
@@ -221,6 +229,8 @@ data Rubiks2x2 = Rubiks2x2 Matrix Matrix
 newtype Matrix = Matrix [[Int]]
 vector :: [Int] -> Matrix
 vector a = Matrix [a]
+stripMatrix :: Matrix -> [[Int]]
+stripMatrix (Matrix x) = x
 \end{code}
 
 \begin{code}
@@ -242,10 +252,12 @@ b = Matrix [[2,4],[2,0]]
 \begin{code}
 concatM :: Matrix -> Matrix -> Matrix
 concatM (Matrix x) (Matrix y) = Matrix $ x ++ y
+diagFlip' :: [[a]] -> [[a]]
+diagFlip' xs
+           | length (head xs) > 1 = map head xs : (diagFlip' (map tail xs))
+           | otherwise = [map head xs]
 diagFlip :: Matrix -> Matrix
-diagFlip (Matrix xs)
-    | length (head xs) > 1 = concatM (Matrix [map head xs]) (diagFlip (Matrix (map tail xs)))
-    | otherwise = Matrix [map head xs]
+diagFlip (Matrix xs) = Matrix $ diagFlip' xs
 \end{code}
 
 \begin{code}
@@ -259,14 +271,57 @@ instance Num Matrix where
                            (Matrix xs') = diagFlip x
 \end{code}
 
+
 \section{Sage Graphics}
 
 \subsection{2x2 Rubik's Cube}
 
 \begin{sageblock}
-def plotRubiks2x2(P, F, c):
-    return
+def colorRect3D(x, c, l, f): # f: 0 (xy), 1 (xz), 2 (yz)
+    x = vector(x)
+    if f == 0:
+        sv1 = vector((-l, 0, 0))
+        sv2 = vector((0, -l, 0))
+    elif f == 1:
+        sv1 = vector((-l, 0, 0))
+        sv2 = vector((0, 0, -l))
+    elif f == 2:
+        sv1 = vector((0, -l, 0))
+        sv2 = vector((0, 0, -l))
+    Gph = Graphics()
+    Gph += polygon3d([x, x+sv1, x+sv1+sv2, x+sv2])
+    return Gph
 \end{sageblock}
+
+\begin{sageblock}
+def colorBlock(p, f, c):
+    Gph = Graphics()
+    baseVector = p * 0.5
+    for cl in c:
+        if f[2]!=0:
+            Gph += colorRect3D(baseVector, c, 1, 0)
+    return Gph
+\end{sageblock}
+
+\begin{sageblock}
+def plotRubiks2x2(P, F, cs):
+    Gph = Graphics()
+    for p, f, c in zip(P, F, cs):
+        Gph += colorBlock(p, f, c)
+    # save3D(Gph) # Comment out if you don't want auto-export
+    return Gph
+\end{sageblock}
+
+\begin{sageblock}
+def save3D(g, n="plot"):
+    filename = "/tmp/"+n+".html"
+    g.save(filename)
+    os.system("sed -i 's/\/usr\/share/..\/usr\/share/g' "+filename)
+    print("Plot3D saved to: "+filename)
+\end{sageblock}
+
+% Usage: 
+%     \iipcode{colorBlock([p]*n, [f]*n, [[(r, g, b)]*3]*n)}
 
 \newpage
 \section*{LICENSE}
