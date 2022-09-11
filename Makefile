@@ -9,6 +9,7 @@ programs: burnside
 
 burnside: prepDir
 	$(GHCd) ./burnside.lhs
+	touch burnside.pyg # Temp fix
 	$(PTEX) ./burnside.lhs
 	$(SAGE) $(PdfDir)/burnside.sagetex.sage
 	$(PTEX) ./burnside.lhs
