@@ -47,7 +47,7 @@ All vectors within this document (no matter if it's in Haskell code or TeX equat
 
 \subsubsection{Matrix}
 
-Within this document, we'll often use matrix as a denotation for an ordered-set of vectors.
+Within this document, we'll often use matrix as a denotation for an ordered-list of vectors.
 
 \begin{equation*}
 [v_1, \dots, v_k] = \begin{bmatrix}
@@ -88,7 +88,11 @@ Hence by these definitions we could conclude that:
 
 \section{Describing Object's State}
 
-To descibe an object's current orientation, we'll use a set of vectors (which is collected into a matrix). For example, a $2\times 2$ square could be denoted by two 2-D vectors (aka a $2\times 2$ matrix) like following:
+\begin{dfn}[Structure-Matrix]
+To descibe an object's current orientation, we'll use a set of vectors (which is collected into a matrix).
+\end{dfn}
+
+ For example, a $2\times 2$ square could be denoted by two 2-D vectors (aka a $2\times 2$ matrix) like following:
 
 \begin{multicols}{2}
 
@@ -112,25 +116,79 @@ M = \begin{bmatrix}
 
 in which we could clearly see by giving two 2-D vectors, we could rigidly define our 4 different squadron (in counterclockwise fashion).
 
+\hr
+
+Or like a cube with 6 faces to color, we could denote it as following:
+\begin{equation}
+\text{令所有面之向量之列表}L=
+\begin{bmatrix}
+  0 & 1 & 0  & -1 & 0 & 0  \\
+  1 & 0 & -1 & 0  & 0 & 0  \\
+  0 & 0 & 0  & 0  & 1 & -1 \\
+\end{bmatrix}
+\end{equation}
+
+\begin{sidenote}{On Duplicated Information}
+One dangerous thing about duplicated info is that you might break structural relationship. As you may have noticed, the matrix above that's being used to denote a cube contains vectors that can be calculated base from others. If we number them from left to right you can see that
+
+\begin{subequations}
+\begin{equation}
+v_3=-v_1
+\end{equation}
+\begin{equation}
+v_4=-v_2
+\end{equation}
+\begin{equation}
+v_6=v_1\times v_2
+\end{equation}
+\begin{equation}
+v_5=-v_6
+\end{equation}
+\end{subequations}
+
+Which meant we only need 2 vectors\footnote{Since our matrix represents an ordered-list, we won't need the third vector to determine orientation. ($[v_1, v_2]\neq[v_2, v_1]$)} to denote a cube. But since in Burnside's Lemma, we're only considering rotation and reflection, leaving duplicated information won't make any difference (except adding some computational time), as rotation and reflection simply won't break an object's structure.
+
+Yet this is still something you should keep in mind, if you're brute forcing all possible outcome by simply shuffling orders of those vectors (instead of using matricies to calculate them). Since you're not using matrix, it'll be your responsibility to ensure those 4 condition listed above are satisfied (suppose you use our initial $L$).
+\end{sidenote}
+
+\section{Operations upon Object's State}
+
 Now we can apply transformations onto these vectors. But what could be counted as a valid transformation?
-\begin{dfn}[Valid Transformation]
-A transformation is consider valid if it only suffles the order of column vectors within the given matrix.
+
+The first condition to met for a transformation to be considered valid is, it must be a shuffle transformation.
+
+\begin{dfn}[Shuffle Transformation]
+A shuffle transformation is a transformation that suffles the order of column vectors within the given matrix. For example, in the following case, $T$ is a shuffle transformation
+\begin{equation*}
+T\begin{bmatrix}
+v_1 & v_2 & v_3 & v_4
+\end{bmatrix} = \begin{bmatrix}
+v_2 & v_4 & v_3 & v_1
+\end{bmatrix}
+\end{equation*}
 \end{dfn}
 
-% TODO: Define closed transformation
-
 \begin{code}
-validVectors :: Matrix -> Matrix -> Bool
---              sample    subject   result
-validVectors (Matrix s) (Matrix x) = (sort s') == (sort x')
-                                    where s' = nub s
-                                          x' = nub x
+-- Check if no new vectors are created and no old vectors are altered
+validVectors1 :: Matrix -> Matrix -> Bool
+--               sample    subject   result
+validVectors1 (Matrix s) (Matrix x) = (sort s') == (sort x')
+                                     where s' = nub s
+                                           x' = nub x
 \end{code}
 
-\section{Describing Operations}
+\subsection{Structure Preserverance of Linear Transformation}
+% TODO: Reduce vector-set s.t. such restriction doesn't exist?
+% NOTE: Position and Angle of vectors
+% QUESTION: Is it possible for "Linear Transformation" to break such structure?
 
+One thing to notice is, since matrix is considered an \textbf{ordered}-list of column vectors, it's important for us to make sure that shuffles won't break an object's structure.
 
-\section{Properties}
+\begin{thm}[Preserverance of Structure in Rotation]
+In Burnside's Lemma, we normally only consider rotation and reflection. And although some structure-matrix
+\end{thm}
+
+\section{Collection of all valid Transformations}
 當我們在談到旋轉一物體的時候我們可以將其總結成：
 \begin{equation}
   \mathbb{T}=\{T \mid T \cdot x\in \mathbb{X}, x\in\mathbb{X}\}
@@ -173,25 +231,25 @@ validVectors (Matrix s) (Matrix x) = (sort s') == (sort x')
   \begin{equation}
     \text{令所有面之向量之列表}L=
     \begin{bmatrix}
-      0 & 1 & 0 & -1 & 0 & 0\\
-      1 & 0 & -1 & 0 & 0 & 0\\
-      0 & 0 & 0 & 0 & 1 & -1\\
+      0 & 1 & 0  & -1 & 0 & 0  \\
+      1 & 0 & -1 & 0  & 0 & 0  \\
+      0 & 0 & 0  & 0  & 1 & -1 \\
     \end{bmatrix}
   \end{equation}
   \begin{equation}
     \text{舉例取轉換}T=
     \begin{bmatrix}
       0 & -1 & 0 \\
-      1 & 0 & 0 \\
-      0 & 0 & 1
+      1 & 0  & 0 \\
+      0 & 0  & 1
     \end{bmatrix}
   \end{equation}
   \begin{equation}
       \text{得}TL=
     \begin{bmatrix}
-      -1 & 0 & 1 & 0 & 0 & 0 \\
-      0 & 1 & 0 & -1 & 0 & 0 \\
-      0 & 0 & 0 & 0 & 1 & -1
+      -1 & 0 & 1 & 0  & 0 & 0  \\
+      0  & 1 & 0 & -1 & 0 & 0  \\
+      0  & 0 & 0 & 0  & 1 & -1
     \end{bmatrix}
   \end{equation}
 \end{subequations}
@@ -251,6 +309,7 @@ data Rubiks2x2 = Rubiks2x2 Matrix Matrix
 \section{Matrix}
 
 \begin{code}
+newtype Vector = Vector [Int] -- DO NOT USE
 newtype Matrix = Matrix [[Int]]
 vector :: [Int] -> Matrix
 vector a = Matrix [a]

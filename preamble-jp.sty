@@ -215,6 +215,22 @@ citecolor=blue]%
     attach title to upper={},
     #1,
 }
+\newtcolorbox{sidenote}[2][]{%
+    colback=yellow!10!white,
+    grow to right by=-10mm,
+    grow to left by=-10mm,
+    boxrule=0pt,
+    boxsep=0pt,
+    breakable,
+    enhanced jigsaw,
+    borderline west={4pt}{0pt}{yellow},
+    title={Sidenote: #2\par},
+    colbacktitle={yellow},
+    coltitle={black},
+    fonttitle={\large\bfseries},
+    attach title to upper={},
+    #1,
+}
 
 \let\oldemptyset\emptyset
 \let\emptyset\varnothing
