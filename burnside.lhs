@@ -39,6 +39,34 @@ import Data.List
 \section*{How to Read}
 \addcontentsline{toc}{section}{How to Read}
 
+\subsection{Defining Notations}
+\addcontentsline{toc}{subsection}{Defining Notations}
+
+\subsubsection{Vector}
+All vectors within this document (no matter if it's in Haskell code or TeX equations) refers to column vectors (even if it's written in style of row vector).
+
+\subsubsection{Matrix}
+
+Within this document, we'll often use matrix as a denotation for an ordered-set of vectors.
+
+\begin{equation*}
+[v_1, \dots, v_k] = \begin{bmatrix}
+\begin{pmatrix}
+v_{1, 1} \\ \vdots \\ v_{1, n}
+\end{pmatrix} & \dots & 
+\begin{pmatrix}
+v_{k, 1} \\ \vdots \\ v_{k, n}
+\end{pmatrix}
+\end{bmatrix} = \begin{bmatrix}
+v_{1, 1} & \dots & v_{k, 1} \\
+\vdots & \ddots & \vdots \\
+v_{1, n} & \dots & v_{k, n}
+\end{bmatrix}
+\end{equation*}
+\begin{center}
+$k=$amount of vectors, $n=$vectors' dimension
+\end{center}
+
 \newpage
 
 
@@ -84,7 +112,10 @@ M = \begin{bmatrix}
 
 in which we could clearly see by giving two 2-D vectors, we could rigidly define our 4 different squadron (in counterclockwise fashion).
 
-Now we can apply transformations onto these vectors. But what could be counted as a valid transformation? Well, those whom preformed a closed transformation.
+Now we can apply transformations onto these vectors. But what could be counted as a valid transformation?
+\begin{dfn}[Valid Transformation]
+A transformation is consider valid if it only suffles the order of column vectors within the given matrix.
+\end{dfn}
 
 % TODO: Define closed transformation
 
@@ -169,15 +200,9 @@ validVectors (Matrix s) (Matrix x) = (sort s') == (sort x')
 就此我們就可以算出他的塗色可能性了。
 
 
-\begin{comment}
-\begin{code}
-eqPair :: (Eq a) => (a, a) -> Bool
-eqPair (x, y) = x==y
-\end{code}
-\end{comment}
 \begin{code}
 disjointSetNum :: Matrix -> Matrix -> Int
-disjointSetNum (Matrix a) (Matrix b) = sum $ map fromEnum (map eqPair (zip a b))
+disjointSetNum (Matrix a) (Matrix b) = sum $ map fromEnum (map (uncurry (==)) (zip a b))
 \end{code}
 
 \section{Extend Research Topics（未寫）}
