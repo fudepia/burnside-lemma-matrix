@@ -1,35 +1,50 @@
-OutputDir = ./out
 PdfDir = ./docs
+OutputDir = ./out
 GHCd = ghc -dynamic -outputdir $(OutputDir) -no-keep-hi-files
-PTEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape" -output-directory $(PdfDir)
+PTEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape"
 SAGE = sage -t
 
-all: programs cleanTex cleanSage
+all: programs cleanSage cleanTeX
 programs: burnside
 
+define cleanupTeX
+	rm -f $(1).aux
+	rm -f $(1).log
+	rm -f $(1).out
+	rm -f $(1).synctex.gz
+	rm -f $(1).toc
+	rm -f $(1).pyg
+	rm -rf _minted-*
+endef
+
+define compileTeX
+	$(PTEX) $(1).lhs
+	mv $(1).pdf $(PdfDir)
+	$(call cleanupTeX, $(1))
+endef
+
+define compileHS
+	$(GHCd) $(1).lhs
+endef
+
 burnside: prepDir
-	$(GHCd) ./burnside.lhs
-	touch burnside.pyg # Temp fix
-	$(PTEX) ./burnside.lhs
-	$(SAGE) $(PdfDir)/burnside.sagetex.sage
-	$(PTEX) ./burnside.lhs
+	$(call compileHS, burnside)
+	$(call compileTeX, burnside)
+	$(SAGE) burnside.sagetex.sage
+	$(call compileTeX, burnside)
 
 prepDir:
 	mkdir -p $(OutputDir)
 	mkdir -p $(PdfDir)
 
-clean:; rm -rf $(OutputDir) $(PdfDir)
+clean: cleanSage cleanTeX; rm -rf $(OutputDir) $(PdfDir)
 
-cleanTex: prepDir
-	find $(PdfDir)/ -type f -name '*.aux' -delete
-	find $(PdfDir)/ -type f -name '*.log' -delete
-	find $(PdfDir)/ -type f -name '*.out' -delete
-	find $(PdfDir)/ -type f -name '*.pyg' -delete
-	find $(PdfDir)/ -type f -name '*.synctex.gz' -delete
-	find $(PdfDir)/ -type f -name '*.toc' -delete
+cleanTeX: prepDir
+	find . -type d -name '_minted*' -exec rm -rf {} +
 cleanSage: prepDir
-	find $(PdfDir)/ -type f -name '*.sagetex.scmd' -delete
-	find $(PdfDir)/ -type f -name '*.sagetex.sout' -delete
+	find . -type f -name '*.sagetex.scmd' -delete
+	find . -type f -name '*.sagetex.sout' -delete
+	find . -type f -name '*.sagetex.sage' -delete # Recommended to clean, as it contains positional detail within TeX docs
 docs: cleanTex
 	rm -rf $(OutputDir)
 program: cleanTex
