@@ -20,7 +20,6 @@ endef
 define compileTeX
 	$(PTEX) $(1).lhs
 	mv $(1).pdf $(PdfDir)
-	$(call cleanupTeX, $(1))
 endef
 
 define compileHS
@@ -32,6 +31,7 @@ burnside: prepDir
 	$(call compileTeX, burnside)
 	$(SAGE) burnside.sagetex.sage
 	$(call compileTeX, burnside)
+	$(call cleanupTeX, $(1))
 
 prepDir:
 	mkdir -p $(OutputDir)
