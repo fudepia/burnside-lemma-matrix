@@ -265,6 +265,7 @@ trackShift (Matrix von) (Matrix zu) = map (search von') zu'
 
 joinTrack :: [(Int, Int)] -> [[Int]]
 joinTrack xs = nub $ map ((nub.sort) . (makeChain xs)) xs
+--                         ^^^ Btw, using `nub` won't break the chain (aka it'll only remove first/last element)
 makeChain :: [(Int, Int)] -> (Int, Int) -> [Int]
 makeChain xs (init, termin)
                 | termin /= x = termin:init:makeChain xs (x, termin)
@@ -280,6 +281,57 @@ To be honest, the main reason I'm introducing matrix/linear transformation into 
 \begin{Q}
 How do we rotate one layer of the Rubik's Cube, while leaving the other layers still?
 \end{Q}
+
+I'm sorry to say it, but now we're going to enter the \textbf{\textit{``programming''}} realm. Why? Because the best method I could think of is just group layers, then apply transformation seperately.
+
+\begin{code}
+type Rubiks2x2 = (Matrix, Matrix)
+--                |       ^ Each Faces
+--                |> Each Block
+{- For Rubiks2x2 P F:
+P = [ Corners*8   , Edges*12   ]
+F = [ Corners*8*3 , Edges*12*2 ]
+-}
+\end{code}
+
+\begin{comment}
+\begin{code}
+top    = [ 0,  0,  1]
+bottom = [ 0,  0, -1]
+right  = [ 1,  0,  0]
+left   = [-1,  0,  0]
+front  = [ 0, -1,  0]
+rear   = [ 0,  1,  0]
+\end{code}
+\begin{code}
+blockType = flip (!!) 4 -- 3 for corner, 2 for edge
+p2x2 = Matrix [
+    [ 1, -1,  1, 3], [ 1,  1,  1, 3], [-1,  1,  1, 3], [-1, -1,  1, 3],
+    [ 1, -1, -1, 3], [ 1,  1, -1, 3], [-1,  1, -1, 3], [-1, -1, -1, 3],
+    [ 1,  0,  1, 2], [ 0,  1,  1, 2], [-1,  0,  1, 2], [ 0, -1,  1, 2],
+    [ 1, -1,  0, 2], [ 1,  1,  0, 2], [-1,  1,  0, 2], [-1, -1,  0, 2],
+    [ 1,  0, -1, 2], [ 0,  1, -1, 2], [-1,  0, -1, 2], [ 0, -1, -1, 2] ]
+f2x2 = Matrix $ concat [
+    [top, front, right], [top, right, rear], [top, rear, left], [top, right, front],
+    [bottom, right, front], [bottom, rear, right], [bottom, left, rear], [bottom, front, right],
+    [top, right], [top, rear], [top, left], [top, front],
+    [front, right], [right, rear], [rear, left], [left, front],
+    [bottom, right], [bottom, rear], [bottom, left], [bottom, front] ]
+twoByTwo = (p2x2, f2x2)
+\end{code}
+\end{comment}
+
+\begin{code}
+-- Grouping of 2x2 Rubik's Cube
+getLayer  :: Vector -> Rubiks2x2 -> Matrix
+getLayer = curry$fst.(uncurry getLayer')
+getLayer' :: Vector -> Rubiks2x2 -> Rubiks2x2
+getLayer' uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (map snd f'))
+                  where f' = filter (\(_, x) -> x==uv) $ zip [0..47] f
+                        (fC, fE) = span (\(_, x) -> 3 == (length x)) f'
+                        corner = map ((p !!) . flip div 3 . fst) fC
+                        edge   = map (((p !!) . (8 +)) . flip div 2 . fst . (\(id, x) -> (id-24, x))) fE
+\end{code}
 
 The way I model 2x2 Rubik's Cube is by first giving a position vector $p_i$ and then a facing vector $f_i$ which tells you which direction is the first face facing.
 
@@ -301,7 +353,7 @@ f_i\text{ is one of the 6 different (directional) unit vector}
 And know with $(p_i, f_i)$ we could denote any block we want, where we can then give a list of 3 colours (order-sensitive) which will be coloured counterclockwise.
 
 \begin{code}
-data Rubiks2x2 = Rubiks2x2 Matrix Matrix
+--data Rubiks2x2 = Rubiks2x2 Matrix Matrix
 \end{code}
 
 \subsubsection{Proof of Completeness}
