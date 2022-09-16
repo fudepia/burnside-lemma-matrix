@@ -67,7 +67,7 @@ v_{1, n} & \dots & v_{k, n}
 $k=$amount of vectors, $n=$vectors' dimension
 \end{center}
 
-And since we're treating matrix as a list (or a set, since it's guaranteed that each vector within it is unique\footnote{}), for simplicity, we'll be using following two expression quite often.
+And since we're treating matrix as a list (or a set, since it's guaranteed that each vector within it is unique\footnote{The sole reason I still prefer to call it a list instead of a set is basically due to its ordered nature. Cause in math, sets are unordered, but here it's critical to main that order-ness, as we're identifying faces through that order.}), for simplicity, we'll be using following two expression quite often.
 
 \begin{subequations}
 \begin{equation}
@@ -253,14 +253,33 @@ validVectors1 (Matrix s) (Matrix x) = (sort s') == (sort x')
 
 就此我們就可以算出他的塗色可能性了。
 
-
 \begin{code}
-disjointSetNum :: Matrix -> Matrix -> Int
-disjointSetNum (Matrix a) (Matrix b) = sum $ map fromEnum (map (uncurry (==)) (zip a b))
+listTracks :: Matrix -> Matrix -> [[Int]]
+listTracks = curry$joinTrack.(uncurry trackShift)
+
+trackShift :: Matrix -> Matrix -> [(Int, Int)]
+trackShift (Matrix von) (Matrix zu) = map (search von') zu'
+           where von' = zip [1..length von] von
+                 zu'  = zip [1..length zu]  zu
+                 search xs (id, x) = (fst.head$(filter (\(_, x') -> x'==x) xs), id)
+
+joinTrack :: [(Int, Int)] -> [[Int]]
+joinTrack xs = nub $ map ((nub.sort) . (makeChain xs)) xs
+makeChain :: [(Int, Int)] -> (Int, Int) -> [Int]
+makeChain xs (init, termin)
+                | termin /= x = termin:init:makeChain xs (x, termin)
+                | otherwise = [init, termin]
+                 where x  = fst $ xs!!(init-1)
 \end{code}
 
 \section{Extend Research Topics（未寫）}
 \subsection{2x2魔術方塊}
+
+To be honest, the main reason I'm introducing matrix/linear transformation into Burnside's Lemma is purely due to its elegancy. By abstracting all the ideas of motion and how a set of faces needs to be the same color into matrix, makes it very easy to solve using computer (at least I hope so, originally). But it turns out I'm only halfway right. It's true we could find all possible transformation more confidently either by brute forcing or 排列組合 with some idea I've developed through this theory, but still there's still some parts we have to hack it through. A minor one will be that we'll have to compare two matrices and then group them by who've swapped to whose slot, but that's still acceptable as we're able to write program to do that. But when we enter the realm of Rubik's Cube, we're faced with the greatest obstacle throughout this project.
+
+\begin{Q}
+How do we rotate one layer of the Rubik's Cube, while leaving the other layers still?
+\end{Q}
 
 The way I model 2x2 Rubik's Cube is by first giving a position vector $p_i$ and then a facing vector $f_i$ which tells you which direction is the first face facing.
 
@@ -328,8 +347,8 @@ dumpMatrix = print.stripMatrix
 \end{code}
 
 \begin{code}
-a = Matrix [[1,2],[2,0]]
-b = Matrix [[2,4],[2,0]]
+a = Matrix [[1,2],[2,4],[2,0],[2,2]]
+b = Matrix [[2,4],[2,0],[1,2],[2,2]]
 \end{code}
 
 \begin{code}
