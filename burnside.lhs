@@ -367,8 +367,22 @@ idn :: Int -> Vector
 idn n
     | n < 1 = [1]
     | otherwise = 0:idn (n-1)
-pad :: Matrix -> Matrix
-pad (Matrix m) = Matrix $ map (++[0]) m ++ [(idn (length m))]
+padU :: Matrix -> Matrix
+padU (Matrix m) = Matrix $ (1:replicate (length m) 0) : map (0:) m
+\end{code}
+
+\begin{code}
+rot90Z=Matrix [[0,1,0], [-1,0,0], [0,0,1]]
+\end{code}
+
+\begin{code}
+patchLayer' :: Matrix -> Matrix -> Matrix
+patchLayer' x (Matrix []) = x
+patchLayer' (Matrix x) (Matrix (t:m)) = patchLayer' (Matrix (a++[t]++b)) (Matrix m)
+                where (a, b') = break (\(i:_) -> i==head t) x
+                      b = tail b'
+patchLayer :: Rubiks2x2 -> Rubiks2x2 -> Rubiks2x2
+patchLayer (a, b) (p, q) = (patchLayer' a p, patchLayer' b q)
 \end{code}
 
 \begin{spec}
@@ -376,7 +390,7 @@ apply :: Matrix -> Vector -> Rubiks2x2 -> Rubiks2x2
 --       Transform Layer     Input        Output
 apply t v x = 
            where m = getLayer v x
-                 pt = pad t
+                 pt = pad.pad $ t
 \end{spec}
 
 \subsubsection{Proof of Completeness}
