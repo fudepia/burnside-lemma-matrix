@@ -348,15 +348,13 @@ rear   = [ 0,  1,  0]
 
 \begin{code}
 -- Grouping of 2x2 Rubik's Cube
-getLayer  :: Vector -> Rubiks2x2 -> Matrix
-getLayer = curry$fst.uncurry getLayer'
-getLayer' :: Vector -> Rubiks2x2 -> Rubiks2x2
-getLayer' uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (f'))
-                where f' = filter (\(i:d:x) -> x==uv) f
-                      -- (fC, fE) = span (\x -> 5 == length x) f'
-                      corner = map ((p !!) . (\(_:g:_) -> g-1)) f'--fC
-                      edge = []
-                      --edge   = map (((p !!).(8 +)).flip div 2.fst.(\(id, x)->(id-24, x))) fE
+getLayer :: Vector -> Rubiks2x2 -> Rubiks2x2
+getLayer uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (f'))
+               where f' = filter (\(i:d:x) -> x==uv) f
+                     -- (fC, fE) = span (\x -> 5 == length x) f'
+                     corner = map ((p !!) . (\(_:g:_) -> g-1)) f'--fC
+                     edge = []
+                     --edge   = map (((p !!).(8 +)).flip div 2.fst.(\(id, x)->(id-24, x))) fE
 -- TODO: Impl for 3x3
 \end{code}
 
@@ -385,13 +383,14 @@ patchLayer :: Rubiks2x2 -> Rubiks2x2 -> Rubiks2x2
 patchLayer (a, b) (p, q) = (patchLayer' a p, patchLayer' b q)
 \end{code}
 
-\begin{spec}
+\begin{code}
 apply :: Matrix -> Vector -> Rubiks2x2 -> Rubiks2x2
 --       Transform Layer     Input        Output
-apply t v x = 
-           where m = getLayer v x
-                 pt = pad.pad $ t
-\end{spec}
+apply t v x = patchLayer x (pt*a, pt*b)
+           where (a, b) = getLayer v x
+                 pt = padU.padU $ t
+-- TODO: Check result!!
+\end{code}
 
 \subsubsection{Proof of Completeness}
 % TODO:
