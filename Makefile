@@ -4,7 +4,7 @@ GHCd = ghc -dynamic -outputdir $(OutputDir) -no-keep-hi-files
 PTEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape"
 SAGE = sage -t
 
-all: programs cleanSage cleanTeX
+all: programs cleanSageAP cleanTeXAP
 programs: burnside
 
 define cleanupTeX
@@ -39,6 +39,12 @@ prepDir:
 
 clean: cleanSage cleanTeX; rm -rf $(OutputDir) $(PdfDir)
 
+cleanTeXAP: prepDir programs
+	find . -type d -name '_minted*' -exec rm -rf {} +
+cleanSageAP: prepDir programs
+	find . -type f -name '*.sagetex.scmd' -delete
+	find . -type f -name '*.sagetex.sout' -delete
+	find . -type f -name '*.sagetex.sage' -delete # Recommended to clean, as it contains positional detail within TeX docs
 cleanTeX: prepDir
 	find . -type d -name '_minted*' -exec rm -rf {} +
 cleanSage: prepDir
