@@ -67,6 +67,17 @@ v_{1, n} & \dots & v_{k, n}
 $k=$amount of vectors, $n=$vectors' dimension
 \end{center}
 
+And since we're treating matrix as a list (or a set, since it's guaranteed that each vector within it is unique\footnote{}), for simplicity, we'll be using following two expression quite often.
+
+\begin{subequations}
+\begin{equation}
+\text{column vector $v$ that exists in M: }v\in{M}
+\end{equation}
+\begin{equation}
+\text{for all column vector $v$ in M: }\forall{v}\in{M}
+\end{equation}
+\end{subequations}
+
 \newpage
 
 
@@ -129,6 +140,7 @@ Or like a cube with 6 faces to color, we could denote it as following:
 \end{equation}
 
 \begin{sidenote}{On Duplicated Information}
+% QUESTION: Is it possible for "Linear Transformation" to break such structure?
 One dangerous thing about duplicated info is that you might break structural relationship. As you may have noticed, the matrix above that's being used to denote a cube contains vectors that can be calculated base from others. If we number them from left to right you can see that
 
 \begin{subequations}
@@ -155,17 +167,12 @@ Yet this is still something you should keep in mind, if you're brute forcing all
 
 Now we can apply transformations onto these vectors. But what could be counted as a valid transformation?
 
-The first condition to met for a transformation to be considered valid is, it must be a shuffle transformation.
+Well, since we already know linear transformation wouldn't break the structure of the object, the only other condition to met is for a transformation to maintain the outline of the object. Or more precisely:
 
 \begin{dfn}[Shuffle Transformation]
-A shuffle transformation is a transformation that suffles the order of column vectors within the given matrix. For example, in the following case, $T$ is a shuffle transformation
-\begin{equation*}
-T\begin{bmatrix}
-v_1 & v_2 & v_3 & v_4
-\end{bmatrix} = \begin{bmatrix}
-v_2 & v_4 & v_3 & v_1
-\end{bmatrix}
-\end{equation*}
+\begin{equation}
+\forall{v\in T M}\left(v\in \left\{v \,|\, v \in M \right\}\right)
+\end{equation}
 \end{dfn}
 
 \begin{code}
@@ -176,17 +183,6 @@ validVectors1 (Matrix s) (Matrix x) = (sort s') == (sort x')
                                      where s' = nub s
                                            x' = nub x
 \end{code}
-
-\subsection{Structure Preserverance of Linear Transformation}
-% TODO: Reduce vector-set s.t. such restriction doesn't exist?
-% NOTE: Position and Angle of vectors
-% QUESTION: Is it possible for "Linear Transformation" to break such structure?
-
-One thing to notice is, since matrix is considered an \textbf{ordered}-list of column vectors, it's important for us to make sure that shuffles won't break an object's structure.
-
-\begin{thm}[Preserverance of Structure in Rotation]
-In Burnside's Lemma, we normally only consider rotation and reflection. And although some structure-matrix
-\end{thm}
 
 \section{Collection of all valid Transformations}
 當我們在談到旋轉一物體的時候我們可以將其總結成：
@@ -309,10 +305,12 @@ data Rubiks2x2 = Rubiks2x2 Matrix Matrix
 \section{Matrix}
 
 \begin{code}
-newtype Vector = Vector [Int] -- DO NOT USE
-newtype Matrix = Matrix [[Int]]
+type Vector = [Int]
 vector :: [Int] -> Matrix
 vector a = Matrix [a]
+
+newtype Matrix = Matrix [[Int]]
+
 stripMatrix :: Matrix -> [[Int]]
 stripMatrix (Matrix x) = x
 \end{code}
@@ -326,6 +324,7 @@ instance Show Matrix where
            | length (head rows) > 1  = "[" ++ (intercalate ", " (map (show.head) rows)) ++ "]\n"
                                      ++ show (Matrix (map tail rows))
            | otherwise = "[" ++ (intercalate ", " (map (show.head) rows)) ++ "]"
+dumpMatrix = print.stripMatrix
 \end{code}
 
 \begin{code}
