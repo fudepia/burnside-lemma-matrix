@@ -284,6 +284,8 @@ How do we rotate one layer of the Rubik's Cube, while leaving the other layers s
 
 I'm sorry to say it, but now we're going to enter the \textbf{\textit{``programming''}} realm. Why? Because the best method I could think of is just group layers, then apply transformation seperately.
 
+Well, with our strategy decided, let's start modeling the Rubik's Cube first.
+
 \begin{code}
 type Rubiks2x2 = (Matrix, Matrix)
 --                |       ^ Each Faces
@@ -292,45 +294,6 @@ type Rubiks2x2 = (Matrix, Matrix)
 P = [ Corners*8   , Edges*12   ]
 F = [ Corners*8*3 , Edges*12*2 ]
 -}
-\end{code}
-
-\begin{comment}
-\begin{code}
-top    = [ 0,  0,  1]
-bottom = [ 0,  0, -1]
-right  = [ 1,  0,  0]
-left   = [-1,  0,  0]
-front  = [ 0, -1,  0]
-rear   = [ 0,  1,  0]
-\end{code}
-\begin{code}
-blockType = flip (!!) 4 -- 3 for corner, 2 for edge
-p2x2 = Matrix [
-    [ 1, -1,  1, 3], [ 1,  1,  1, 3], [-1,  1,  1, 3], [-1, -1,  1, 3],
-    [ 1, -1, -1, 3], [ 1,  1, -1, 3], [-1,  1, -1, 3], [-1, -1, -1, 3],
-    [ 1,  0,  1, 2], [ 0,  1,  1, 2], [-1,  0,  1, 2], [ 0, -1,  1, 2],
-    [ 1, -1,  0, 2], [ 1,  1,  0, 2], [-1,  1,  0, 2], [-1, -1,  0, 2],
-    [ 1,  0, -1, 2], [ 0,  1, -1, 2], [-1,  0, -1, 2], [ 0, -1, -1, 2] ]
-f2x2 = Matrix $ concat [
-    [top, front, right], [top, right, rear], [top, rear, left], [top, right, front],
-    [bottom, right, front], [bottom, rear, right], [bottom, left, rear], [bottom, front, right],
-    [top, right], [top, rear], [top, left], [top, front],
-    [front, right], [right, rear], [rear, left], [left, front],
-    [bottom, right], [bottom, rear], [bottom, left], [bottom, front] ]
-twoByTwo = (p2x2, f2x2)
-\end{code}
-\end{comment}
-
-\begin{code}
--- Grouping of 2x2 Rubik's Cube
-getLayer  :: Vector -> Rubiks2x2 -> Matrix
-getLayer = curry$fst.uncurry getLayer'
-getLayer' :: Vector -> Rubiks2x2 -> Rubiks2x2
-getLayer' uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (map snd f'))
-                  where f' = filter (\(_, x) -> x==uv) $ zip [0..47] f
-                        (fC, fE) = span (\(_, x) -> 3 == length x) f'
-                        corner = map ((p !!) . flip div 3 . fst) fC
-                        edge   = map (((p !!) . (8 +)) . flip div 2 . fst . (\(id, x) -> (id-24, x))) fE
 \end{code}
 
 The way I model 2x2 Rubik's Cube is by first giving a position vector $p_i$ and then a facing vector $f_i$ which tells you which direction is the first face facing.
@@ -350,18 +313,99 @@ f_i\text{ is one of the 6 different (directional) unit vector}
 \end{equation}
 \end{subequations}
 
-And know with $(p_i, f_i)$ we could denote any block we want, where we can then give a list of 3 colours (order-sensitive) which will be coloured counterclockwise.
+And know with $(p_i, f_i)$ we could denote any block we want, where we can then give a list of 3 colours (order-sensitive) which will be coloured counterclockwise.\footnote{Since Haskell only support variables' name starting with lower case, we'll have to follow the rule. So just keep in mind that \icode{p2x2} meant $P$, and \icode{f2x2} meant $F$.}
 
 \begin{code}
---data Rubiks2x2 = Rubiks2x2 Matrix Matrix
+attachID :: [[Int]] -> [[Int]]
+attachID xs = map (uncurry (++)) $ zip (map singleton [1..length xs]) xs
+p2x2 = Matrix $ attachID $
+       map ([3]++) $
+       (:) <$> [1, -1] <*>
+       ((\a b -> [a, b]) <$> [1, -1] <*> [1, -1])
+f2x2 = Matrix $ attachID $ concatMap genFace $ stripMatrix p2x2
+twoByTwo = (p2x2, f2x2)
 \end{code}
+
+\begin{code}
+genFace :: [Int] -> [[Int]]
+genFace (i:g:x:y:z:_) = map (i:) $ (fx x) ++ (fy y) ++ (fz z)
+                   where fx v | v==1=[right] | v==(-1)=[left  ] | otherwise = []
+                         fy v | v==1=[rear ] | v==(-1)=[front ] | otherwise = []
+                         fz v | v==1=[top  ] | v==(-1)=[bottom] | otherwise = []
+\end{code}
+
+\begin{code}
+-- Some shortcut for readability
+top    = [ 0,  0,  1]
+bottom = [ 0,  0, -1]
+right  = [ 1,  0,  0]
+left   = [-1,  0,  0]
+front  = [ 0, -1,  0]
+rear   = [ 0,  1,  0]
+\end{code}
+
+\subsection{Getting Layers}
+
+\begin{code}
+-- Grouping of 2x2 Rubik's Cube
+getLayer  :: Vector -> Rubiks2x2 -> Matrix
+getLayer = curry$fst.uncurry getLayer'
+getLayer' :: Vector -> Rubiks2x2 -> Rubiks2x2
+getLayer' uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (f'))
+                where f' = filter (\(i:d:x) -> x==uv) f
+                      -- (fC, fE) = span (\x -> 5 == length x) f'
+                      corner = map ((p !!) . (\(_:g:_) -> g-1)) f'--fC
+                      edge = []
+                      --edge   = map (((p !!).(8 +)).flip div 2.fst.(\(id, x)->(id-24, x))) fE
+-- TODO: Impl for 3x3
+\end{code}
+
+\subsection{Join Everything Together}
+
+\begin{code}
+idn :: Int -> Vector
+idn n
+    | n < 1 = [1]
+    | otherwise = 0:idn (n-1)
+pad :: Matrix -> Matrix
+pad (Matrix m) = Matrix $ map (++[0]) m ++ [(idn (length m))]
+\end{code}
+
+\begin{spec}
+apply :: Matrix -> Vector -> Rubiks2x2 -> Rubiks2x2
+--       Transform Layer     Input        Output
+apply t v x = 
+           where m = getLayer v x
+                 pt = pad t
+\end{spec}
 
 \subsubsection{Proof of Completeness}
 % TODO:
 
 % \subsection{非正多面體}
 % \subsection{高維物體}
+
 % \subsection{3x3魔術方塊}
+% \begin{code}
+% blockType = flip (!!) 4 -- 3 for corner, 2 for edge
+% \end{code}
+% \begin{comment}
+% \begin{code}
+% p3x3 = Matrix [
+%     [ 1, -1,  1, 3], [ 1,  1,  1, 3], [-1,  1,  1, 3], [-1, -1,  1, 3],
+%     [ 1, -1, -1, 3], [ 1,  1, -1, 3], [-1,  1, -1, 3], [-1, -1, -1, 3],
+%     [ 1,  0,  1, 2], [ 0,  1,  1, 2], [-1,  0,  1, 2], [ 0, -1,  1, 2],
+%     [ 1, -1,  0, 2], [ 1,  1,  0, 2], [-1,  1,  0, 2], [-1, -1,  0, 2],
+%     [ 1,  0, -1, 2], [ 0,  1, -1, 2], [-1,  0, -1, 2], [ 0, -1, -1, 2] ]
+% f3x3 = Matrix $ concat [
+%     [top, front, right], [top, right, rear], [top, rear, left], [top, right, front],
+%     [bottom, right, front], [bottom, rear, right], [bottom, left, rear], [bottom, front, right],
+%     [top, right], [top, rear], [top, left], [top, front],
+%     [front, right], [right, rear], [rear, left], [left, front],
+%     [bottom, right], [bottom, rear], [bottom, left], [bottom, front] ]
+% threeByThree = (p3x3, f3x3)
+% \end{code}
+% \end{comment}
 
 
 
@@ -476,6 +520,19 @@ def save3D(g, n="plot"):
 
 % Usage: 
 %     \iipcode{colorBlock([p]*n, [f]*n, [[(r, g, b)]*3]*n)}
+
+\section{Ternary Operator}
+\begin{code}
+-- https://wiki.haskell.org/Ternary_operator
+data Cond a = a :? a
+
+infixl 0 ?
+infixl 1 :?
+
+(?) :: Bool -> Cond a -> a
+True  ? (x :? _) = x
+False ? (_ :? y) = y
+\end{code}
 
 \newpage
 \section*{LICENSE}
