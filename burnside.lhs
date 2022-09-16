@@ -265,7 +265,8 @@ trackShift (Matrix von) (Matrix zu) = map (search von') zu'
 
 joinTrack :: [(Int, Int)] -> [[Int]]
 joinTrack xs = nub $ map ((nub.sort) . makeChain xs) xs
---                         ^^^ Btw, using `nub` won't break the chain (aka it'll only remove first/last element)
+--                         ^^^ Btw, using `nub` won't break the chain
+--                             (aka it'll only remove first/last element)
 makeChain :: [(Int, Int)] -> (Int, Int) -> [Int]
 makeChain xs (init, termin)
                 | termin /= x = termin:init:makeChain xs (x, termin)
@@ -298,6 +299,7 @@ F = [ Corners*8*3 , Edges*12*2 ]
 
 The way I model 2x2 Rubik's Cube is by first giving a position vector $p_i$ and then a facing vector $f_i$ which tells you which direction is the first face facing.
 
+% TODO: Update! (I've complicated something)
 \begin{subequations}
 \begin{equation}
 P = \begin{bmatrix}
@@ -317,18 +319,20 @@ And know with $(p_i, f_i)$ we could denote any block we want, where we can then 
 
 \begin{code}
 attachID :: [[Int]] -> [[Int]]
-attachID xs = map (uncurry (++)) $ zip (map singleton [1..length xs]) xs
-p2x2 = Matrix $ attachID $
-       map ([3]++) $
-       (:) <$> [1, -1] <*>
-       ((\a b -> [a, b]) <$> [1, -1] <*> [1, -1])
+attachID xs = zipWith (++) (map singleton [1..length xs]) xs
+\end{code}
+
+\begin{code}
+corners' = (:) <$> [1, -1] <*>
+           ((\a b -> [a, b]) <$> [1, -1] <*> [1, -1])
+p2x2 = Matrix $ attachID $ map ([3]++) corners'
 f2x2 = Matrix $ attachID $ concatMap genFace $ stripMatrix p2x2
 twoByTwo = (p2x2, f2x2)
 \end{code}
 
 \begin{code}
 genFace :: [Int] -> [[Int]]
-genFace (i:g:x:y:z:_) = map (i:) $ (fx x) ++ (fy y) ++ (fz z)
+genFace (i:g:x:y:z:_) = map (i:) $ fx x ++ fy y ++ fz z
                    where fx v | v==1=[right] | v==(-1)=[left  ] | otherwise = []
                          fy v | v==1=[rear ] | v==(-1)=[front ] | otherwise = []
                          fz v | v==1=[top  ] | v==(-1)=[bottom] | otherwise = []
@@ -344,21 +348,24 @@ front  = [ 0, -1,  0]
 rear   = [ 0,  1,  0]
 \end{code}
 
-\subsection{Getting Layers}
+\subsubsection{Getting Layers}
 
 \begin{code}
--- Grouping of 2x2 Rubik's Cube
+-- Grouping of Rubik's Cube
 getLayer :: Vector -> Rubiks2x2 -> Rubiks2x2
-getLayer uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (f'))
-               where f' = filter (\(i:d:x) -> x==uv) f
-                     -- (fC, fE) = span (\x -> 5 == length x) f'
-                     corner = map ((p !!) . (\(_:g:_) -> g-1)) f'--fC
-                     edge = []
-                     --edge   = map (((p !!).(8 +)).flip div 2.fst.(\(id, x)->(id-24, x))) fE
--- TODO: Impl for 3x3
+getLayer uv (Matrix p, Matrix f) = (Matrix res, Matrix f')
+               where f' = filter (\(i:g:x) -> x==uv) f
+                     res = map ((p !!) . (\(_:g:_) -> g-1)) f'
 \end{code}
+\begin{comment}
+\begin{code}
+                     -- Below is used, keeping just in case
+                     -- (fC, fE) = break (\(i:g:x) -> g > 8) f'
+                     -- break at 8 as any cube will only have 8 corners
+\end{code}
+\end{comment}
 
-\subsection{Join Everything Together}
+\subsubsection{Join Everything Together}
 
 \begin{code}
 idn :: Int -> Vector
@@ -370,15 +377,11 @@ padU (Matrix m) = Matrix $ (1:replicate (length m) 0) : map (0:) m
 \end{code}
 
 \begin{code}
-rot90Z=Matrix [[0,1,0], [-1,0,0], [0,0,1]]
-\end{code}
-
-\begin{code}
 patchLayer' :: Matrix -> Matrix -> Matrix
 patchLayer' x (Matrix []) = x
 patchLayer' (Matrix x) (Matrix (t:m)) = patchLayer' (Matrix (a++[t]++b)) (Matrix m)
-                where (a, b') = break (\(i:_) -> i==head t) x
-                      b = tail b'
+                where (a', b) = splitAt (head t) x
+                      a = init a'
 patchLayer :: Rubiks2x2 -> Rubiks2x2 -> Rubiks2x2
 patchLayer (a, b) (p, q) = (patchLayer' a p, patchLayer' b q)
 \end{code}
@@ -398,27 +401,20 @@ apply t v x = patchLayer x (pt*a, pt*b)
 % \subsection{非正多面體}
 % \subsection{高維物體}
 
-% \subsection{3x3魔術方塊}
-% \begin{code}
-% blockType = flip (!!) 4 -- 3 for corner, 2 for edge
-% \end{code}
-% \begin{comment}
-% \begin{code}
-% p3x3 = Matrix [
-%     [ 1, -1,  1, 3], [ 1,  1,  1, 3], [-1,  1,  1, 3], [-1, -1,  1, 3],
-%     [ 1, -1, -1, 3], [ 1,  1, -1, 3], [-1,  1, -1, 3], [-1, -1, -1, 3],
-%     [ 1,  0,  1, 2], [ 0,  1,  1, 2], [-1,  0,  1, 2], [ 0, -1,  1, 2],
-%     [ 1, -1,  0, 2], [ 1,  1,  0, 2], [-1,  1,  0, 2], [-1, -1,  0, 2],
-%     [ 1,  0, -1, 2], [ 0,  1, -1, 2], [-1,  0, -1, 2], [ 0, -1, -1, 2] ]
-% f3x3 = Matrix $ concat [
-%     [top, front, right], [top, right, rear], [top, rear, left], [top, right, front],
-%     [bottom, right, front], [bottom, rear, right], [bottom, left, rear], [bottom, front, right],
-%     [top, right], [top, rear], [top, left], [top, front],
-%     [front, right], [right, rear], [rear, left], [left, front],
-%     [bottom, right], [bottom, rear], [bottom, left], [bottom, front] ]
-% threeByThree = (p3x3, f3x3)
-% \end{code}
-% \end{comment}
+\subsection{3x3魔術方塊}
+\begin{code}
+blockType = flip (!!) 4 -- 3 for corner, 2 for edge
+\end{code}
+\begin{code}
+p3x3 = Matrix $ attachID $
+       map ([3]++) corners' ++
+       map ([2]++) edges
+      where edges = concatMap
+                     ((\(a:b:c:_) -> [[a, b, c], [b, c, a], [c, a, b]]).(0:))
+                     ((\a b -> [a, b]) <$> [1, -1] <*> [1, -1])
+f3x3 = Matrix $ attachID $ concatMap genFace $ stripMatrix p3x3
+threeByThree = (p3x3, f3x3)
+\end{code}
 
 
 
@@ -533,19 +529,6 @@ def save3D(g, n="plot"):
 
 % Usage: 
 %     \iipcode{colorBlock([p]*n, [f]*n, [[(r, g, b)]*3]*n)}
-
-\section{Ternary Operator}
-\begin{code}
--- https://wiki.haskell.org/Ternary_operator
-data Cond a = a :? a
-
-infixl 0 ?
-infixl 1 :?
-
-(?) :: Bool -> Cond a -> a
-True  ? (x :? _) = x
-False ? (_ :? y) = y
-\end{code}
 
 \newpage
 \section*{LICENSE}
