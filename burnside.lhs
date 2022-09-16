@@ -179,7 +179,7 @@ Well, since we already know linear transformation wouldn't break the structure o
 -- Check if no new vectors are created and no old vectors are altered
 validVectors1 :: Matrix -> Matrix -> Bool
 --               sample    subject   result
-validVectors1 (Matrix s) (Matrix x) = (sort s') == (sort x')
+validVectors1 (Matrix s) (Matrix x) = sort s' == sort x'
                                      where s' = nub s
                                            x' = nub x
 \end{code}
@@ -255,16 +255,16 @@ validVectors1 (Matrix s) (Matrix x) = (sort s') == (sort x')
 
 \begin{code}
 listTracks :: Matrix -> Matrix -> [[Int]]
-listTracks = curry$joinTrack.(uncurry trackShift)
+listTracks = curry$joinTrack.uncurry trackShift
 
 trackShift :: Matrix -> Matrix -> [(Int, Int)]
 trackShift (Matrix von) (Matrix zu) = map (search von') zu'
            where von' = zip [1..length von] von
                  zu'  = zip [1..length zu]  zu
-                 search xs (id, x) = (fst.head$(filter (\(_, x') -> x'==x) xs), id)
+                 search xs (id, x) = (fst.head$filter (\(_, x') -> x'==x) xs, id)
 
 joinTrack :: [(Int, Int)] -> [[Int]]
-joinTrack xs = nub $ map ((nub.sort) . (makeChain xs)) xs
+joinTrack xs = nub $ map ((nub.sort) . makeChain xs) xs
 --                         ^^^ Btw, using `nub` won't break the chain (aka it'll only remove first/last element)
 makeChain :: [(Int, Int)] -> (Int, Int) -> [Int]
 makeChain xs (init, termin)
@@ -324,11 +324,11 @@ twoByTwo = (p2x2, f2x2)
 \begin{code}
 -- Grouping of 2x2 Rubik's Cube
 getLayer  :: Vector -> Rubiks2x2 -> Matrix
-getLayer = curry$fst.(uncurry getLayer')
+getLayer = curry$fst.uncurry getLayer'
 getLayer' :: Vector -> Rubiks2x2 -> Rubiks2x2
 getLayer' uv (Matrix p, Matrix f) = (Matrix (corner++edge), Matrix (map snd f'))
                   where f' = filter (\(_, x) -> x==uv) $ zip [0..47] f
-                        (fC, fE) = span (\(_, x) -> 3 == (length x)) f'
+                        (fC, fE) = span (\(_, x) -> 3 == length x) f'
                         corner = map ((p !!) . flip div 3 . fst) fC
                         edge   = map (((p !!) . (8 +)) . flip div 2 . fst . (\(id, x) -> (id-24, x))) fE
 \end{code}
@@ -392,9 +392,9 @@ instance Show Matrix where
                     | null xs = "[" ++ show x ++ "]"
                     | otherwise = "[" ++ show x ++ "]\n" ++ show (Matrix [xs])
     show (Matrix rows)
-           | length (head rows) > 1  = "[" ++ (intercalate ", " (map (show.head) rows)) ++ "]\n"
+           | length (head rows) > 1  = "[" ++ intercalate ", " (map (show.head) rows) ++ "]\n"
                                      ++ show (Matrix (map tail rows))
-           | otherwise = "[" ++ (intercalate ", " (map (show.head) rows)) ++ "]"
+           | otherwise = "[" ++ intercalate ", " (map (show.head) rows) ++ "]"
 dumpMatrix = print.stripMatrix
 \end{code}
 
@@ -408,7 +408,7 @@ concatM :: Matrix -> Matrix -> Matrix
 concatM (Matrix x) (Matrix y) = Matrix $ x ++ y
 diagFlip' :: [[a]] -> [[a]]
 diagFlip' xs
-           | length (head xs) > 1 = map head xs : (diagFlip' (map tail xs))
+           | length (head xs) > 1 = map head xs : diagFlip' (map tail xs)
            | otherwise = [map head xs]
 diagFlip :: Matrix -> Matrix
 diagFlip (Matrix xs) = Matrix $ diagFlip' xs
@@ -417,11 +417,11 @@ diagFlip (Matrix xs) = Matrix $ diagFlip' xs
 \begin{code}
 instance Num Matrix where
     (Matrix [xs]) + (Matrix [ys]) = Matrix [zipWith (+) xs ys]
-    (Matrix (x:xs)) + (Matrix (y:ys)) = concatM (Matrix [zipWith (+) x y]) ((Matrix xs)+(Matrix ys))
+    Matrix (x:xs) + Matrix (y:ys) = concatM (Matrix [zipWith (+) x y]) (Matrix xs + Matrix ys)
     (Matrix []) + a@(Matrix _) = a
     a@(Matrix _) + (Matrix []) = a
     x * (Matrix ys) = Matrix $ map f ys
-                     where f y = map (sum.(zipWith (*)) y) xs'
+                     where f y = map (sum.zipWith (*) y) xs'
                            (Matrix xs') = diagFlip x
 \end{code}
 
