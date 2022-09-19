@@ -4,18 +4,9 @@ GHCd = ghc -dynamic -outputdir $(OutputDir) -no-keep-hi-files
 PTEX = ptex2pdf -u -l -ot "-synctex=1 -interaction=nonstopmode -file-line-error-style -shell-escape"
 SAGE = sage -t
 
-all: programs cleanSageAP cleanTeXAP
+all: programs cleanSageAP cleanTeXAP cleanTeX
 programs: burnside
 
-define cleanupTeX
-	rm -f $(1).aux
-	rm -f $(1).log
-	rm -f $(1).out
-	rm -f $(1).synctex.gz
-	rm -f $(1).toc
-	rm -f $(1).pyg
-	rm -rf _minted-*
-endef
 
 define compileTeX
 	$(PTEX) $(1).lhs
@@ -31,7 +22,6 @@ burnside: prepDir
 	$(call compileTeX, burnside)
 	$(SAGE) burnside.sagetex.sage
 	$(call compileTeX, burnside)
-	$(call cleanupTeX, $(1))
 
 prepDir:
 	mkdir -p $(OutputDir)
@@ -39,15 +29,21 @@ prepDir:
 
 clean: cleanSage cleanTeX; rm -rf $(OutputDir) $(PdfDir)
 
-cleanTeXAP: prepDir programs
+cleanTeXAP: programs
 	find . -type d -name '_minted*' -exec rm -rf {} +
-cleanSageAP: prepDir programs
+cleanSageAP: programs
 	find . -type f -name '*.sagetex.scmd' -delete
 	find . -type f -name '*.sagetex.sout' -delete
 	find . -type f -name '*.sagetex.sage' -delete # Recommended to clean, as it contains positional detail within TeX docs
-cleanTeX: prepDir
+cleanTeX: programs
+	find . -type f -name '*.aux' -delete
+	find . -type f -name '*.log' -delete
+	find . -type f -name '*.out' -delete
+	find . -type f -name '*.synctex.gz' -delete
+	find . -type f -name '*.toc' -delete
+	find . -type f -name '*.pyg' -delete
 	find . -type d -name '_minted*' -exec rm -rf {} +
-cleanSage: prepDir
+cleanSage: programs
 	find . -type f -name '*.sagetex.scmd' -delete
 	find . -type f -name '*.sagetex.sout' -delete
 	find . -type f -name '*.sagetex.sage' -delete # Recommended to clean, as it contains positional detail within TeX docs
@@ -55,4 +51,4 @@ docs: cleanTex
 	rm -rf $(OutputDir)
 program: cleanTex
 	rm -rf $(PdfDir)
-keepSage: programs cleanTex
+keepSage: programs cleanTeX
